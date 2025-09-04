@@ -9,22 +9,54 @@
 #include "ext.h"
 
 
+char* pop_argv(char **_argv, int index) {
+	char* ret = _argv[index];
+	int i = index;
+	while (_argv[i] && _argv[i+1]) {
+		_argv[i] = _argv[i+1];
+		++i;
+	}
+	_argv[i] = NULL;
+	return ret;
+}
 
+void parse_IO_redirections(char** _argv)
+{
+	int i = 0;
+	while(_argv[i]) {
+		char* c = strchr(_argv[i], '>');
+		if (c) {
+			if (c > _argv[i]) {
+				*c = 0;
+			} else if (c == _argv[i] && _argv[i][1] != 0) {
+				++_argv[i];
+			} else if (c == _argv[i]) {
+				pop_argv(_argv, i);
+			}
+		}
+		++i;
+	}
+}
 
 int main(int argc, char *argv[]) {
 	setbuf(stdout, NULL);
 	char buf[BIG_BUF_SIZE];
 	Cmd cmd;
 	for (;;) {
-		printf("%s$ ", getcwd(buf, CWD_BUF_SIZE));
+		printf("%s $ ", getcwd(buf, CWD_BUF_SIZE));
 		fgets(buf, BIG_BUF_SIZE, stdin);
 		buf[strlen(buf) -1] = 0;
 		if (strlen(buf) == 0)
 			continue;
+
+
 		char **_argv = make_argv(buf); // Building tokens
 		if (!_argv) { // rejecting the user input if a command argument size is large
 			continue;
 		}
+		parse_dollar_sign(_argv);
+
+		parse_IO_redirections(_argv);
 
 		if (!strcmp(_argv[0], "echo"))
 			cmd = ECHO;
@@ -43,7 +75,6 @@ int main(int argc, char *argv[]) {
 		else
 			cmd = FRK;
 
-		parse_dollar_sign(_argv);
 
 		switch(cmd) {
 		case ECHO:
@@ -75,6 +106,7 @@ int main(int argc, char *argv[]) {
 			break;
 		} // switch
 		free(_argv);
+		/* reset_fds(); */
 	} // for(;;)
 } // main
 

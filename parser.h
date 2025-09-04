@@ -13,5 +13,4 @@ int has_assign(char **_argv, Cmd cmd);
 void parse_dollar_sign(char **_argv);
 
 
-
 #endif
