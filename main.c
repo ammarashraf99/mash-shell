@@ -12,14 +12,27 @@ char **varList = NULL;
 size_t g_count = 0;
 size_t capacity = 0;
 
+void export(char **_argv) 
+{
+	int i = 1; // bypassing "export" command
+	if (!has_assign(_argv,EXPORT)) {
+		return;
+	}
+	store_vars(_argv, EXPORT);
+	while(_argv[i]) {
+		putenv(_argv[i]);
+		++i;
+	}
+}
 
 
 int main(int argc, char *argv[]) {
-	char buf[BUFSIZ];
+	setbuf(stdout, NULL);
+	char buf[BIG_BUF_SIZE];
 	Cmd cmd;
 	for (;;) {
 		printf("Simple shell $ ");
-		fgets(buf, BIG_BUF_SIZE, stdin); // Getting input from user
+		fgets(buf, BIG_BUF_SIZE, stdin);
 		buf[strlen(buf) -1] = 0;
 		if (strlen(buf) == 0)
 			continue;
@@ -38,9 +51,9 @@ int main(int argc, char *argv[]) {
 			cmd = EXT;
 		else if (!strcmp(_argv[0], "printvars"))
 			cmd = PRINT_ARGS;
-		else if (!strcmp(_argv[0], "source"))
-			cmd = SOURCE;
-		else if (has_assign(_argv))
+		else if (!strcmp(_argv[0], "export"))
+			cmd = EXPORT;
+		else if (has_assign(_argv, IGN))
 			cmd = ASIGN;
 		else
 			cmd = FRK;
@@ -63,14 +76,17 @@ int main(int argc, char *argv[]) {
 		case PRINT_ARGS:
 			print_vars();
 			break;
-		case SOURCE:
-			// source();
+		case EXPORT:
+			export(_argv);
 			break;
 		case ASIGN:
-			store_vars(_argv[0]);
+			store_vars(_argv, IGN);
 			break;
 		case FRK:
 			frk(_argv);
+			break;
+		case IGN:
+			printf("IGN\n");
 			break;
 		} // switch
 		free(_argv);
@@ -83,17 +99,17 @@ void frk(char **_argv)
 	if ((pid = fork()) < 0) {
 		fprintf(stderr, "failed fork: %s\n", strerror(errno));
 	} else if (pid == 0) { // Child
-		printf("CHILD: pid = %d, ppid = %d\n", getpid(), getppid());
+		/* printf("CHILD: pid = %d, ppid = %d\n", getpid(), getppid()); */
 		if (execvp(_argv[0], _argv) < 0) {
-			fprintf(stderr, "failed exec: (%s) %s\n", _argv[0], strerror(errno));
+			fprintf(stderr, "Invalid command: (%s) %s\n", _argv[0], strerror(errno));
 			exit(1);
 		}
 		exit(0);
 	} else { // Parent
 		int status;
-		printf("PARENT: pid = %d, child = %d\n", getpid(), pid);
+		/* printf("PARENT: pid = %d, child = %d\n", getpid(), pid); */
 		wait(&status);
-		printf("PARENT: pid = %d, child status = %d\n", getpid(), WEXITSTATUS(status));
+		/* printf("PARENT: pid = %d, child status = %d\n", getpid(), WEXITSTATUS(status)); */
 	}
 }
 
@@ -126,7 +142,7 @@ void pwd(char **_argv)
 
 void echo(char **_argv)
 {
-	int i = 1;
+	int i = 1; // bypassing "echo" command
 	while (_argv[i]) {
 		printf("%s ", _argv[i++]);
 	}
@@ -172,43 +188,50 @@ char** make_argv(char buf[])
 	return _argv;
 }
 
-int has_assign(char** _argv)
+int has_assign(char **_argv, Cmd cmd)
 {
-	if (_argv[1]) {
-		return 0;
-	}	
-	char tmp[BIG_BUF_SIZE]; 
-	strcpy(tmp, _argv[0]);
-	if (strtok(tmp, "=")) {
-		if (strtok(NULL, " ")) {
-			return 1;
+	int i = 0;
+	if (cmd == EXPORT)
+		i = 1; // bypassing "export" command
+	while(_argv[i]) {
+		char tmp[BIG_BUF_SIZE];
+		strcpy(tmp, _argv[i]);
+		if ( !(strtok(tmp, "=") && strtok(NULL, " ")) ) {
+			return 0;
 		}
+		++i;
 	}
-	return 0;
+	return 1;
 }
 
-void store_vars(char* buf)
+void store_vars(char** _argv, Cmd cmd)
 {
-	if (g_count == capacity) {
-		size_t new_capacity = (capacity == 0) ? 4 : capacity * 2;
-		char** tmp = realloc(varList, new_capacity * sizeof(char*));
-		if (!tmp) {
-			fprintf(stderr, "error: realloc %s\n", strerror(errno));
+	int i = 0;
+	if (cmd == EXPORT)
+		i = 1; // bypassing "export" command
+	while (_argv[i]) {
+		if (g_count == capacity) {
+			size_t new_capacity = (capacity == 0) ? 4 : capacity * 2;
+			char** tmp = realloc(varList, new_capacity * sizeof(char*));
+			if (!tmp) {
+				fprintf(stderr, "error: realloc %s\n", strerror(errno));
+				return;
+			}
+			varList = tmp;
+			capacity = new_capacity;
+		}
+		// allocate and copy the string
+		varList[g_count] = malloc( strlen(_argv[i]) + 1);
+		if (!varList[g_count]) {
+			fprintf(stderr, "error: malloc %s\n", strerror(errno));
 			return;
 		}
-		varList = tmp;
-		capacity = new_capacity;
+		strcpy(varList[g_count], _argv[i]);
+		++g_count;
+		printf("%s Stored\n", _argv[i]);
+		++i;
 	}
 
-	// allocate and copy the string
-	varList[g_count] = malloc( strlen(buf) + 1);
-	if (!varList[g_count]) {
-		fprintf(stderr, "error: malloc %s\n", strerror(errno));
-		return;
-	}
-	strcpy(varList[g_count], buf);
-	++g_count;
-	printf("%s Stored\n", buf);
 }
 
 void free_vars()
@@ -240,15 +263,14 @@ char* get_var(char* buf)
 			return &varList[i][strlen(buf+1)+1];
 		}
 	}
-	return NULL;
+	return getenv(buf+1);
 }
-
 
 void parse_dollar_sign(char **_argv)
 {
 	int i = 0;
 	while(_argv[i]) {
-		if (_argv[i][0] == '$') { // What is the max of _argv[i] ????
+		if (_argv[i][0] == '$') {
 			char* var = get_var(_argv[i]);
 			if (var) {
 				_argv[i] = malloc(strlen(var)+1);
