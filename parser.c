@@ -1,8 +1,11 @@
 #include "parser.h"
+#include "nano.h"
 
 
 char** make_argv(char buf[])
 {
+	/* char temp_buf[BIG_BUF_SIZE]; */
+	/* strcpy(temp_buf, buf); */
 	char** _argv = NULL;
 	int count = 0;
 	char* tokptr = strtok(buf, " ");
