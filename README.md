@@ -4,11 +4,13 @@
 
 ### finish >, <, 2> redirections
 
-	* [ ] fixing the sqashed case
+* [x] fixing the sqashed case
 
-	* [ ] making a having IO functions
+* [x] making a having IO functions
 
-	* [ ] cleaning the IO_redirection_function
+* [x] cleaning the IO_redirection_function
+
+* [ ] making the in redirection
 
 ### work on remember vars branch
 
