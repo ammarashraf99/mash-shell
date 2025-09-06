@@ -1,5 +1,15 @@
 # Nano-Shell
 
+## Build
+
+A make file is included, just hit `make` and object files and final mash 
+executable.
+
+```
+$ make
+$ ./mash
+```
+
 ## TODO
 
 ### finish >, <, 2> redirections
@@ -19,3 +29,6 @@
 
 
 ### work on PIPES after those
+
+
+
