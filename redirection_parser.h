@@ -5,7 +5,7 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include "nano.h"
+#include "mash.h"
 #include "parser.h"
 
 #define INVALID_FD -1

@@ -1,5 +1,4 @@
 #include "parser.h"
-#include "nano.h"
 
 
 char** make_argv(char buf[])

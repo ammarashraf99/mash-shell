@@ -1,8 +1,8 @@
-TARGET = nano
+TARGET = mash
 FLAGS = -ggdb -Wall
 CC = gcc
 
-OBJ = nano.o cd.o pwd.o ext.o vars.o parser.o frk.o echo.o redirection_parser.o
+OBJ = mash.o cd.o pwd.o ext.o vars.o parser.o frk.o echo.o redirection_parser.o
 
 .PHONY: all
 all: $(TARGET)

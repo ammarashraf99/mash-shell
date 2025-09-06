@@ -6,7 +6,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "nano.h"
+#include "mash.h"
 
 void pwd(char **_argv);
 

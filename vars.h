@@ -5,7 +5,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "nano.h"
+#include "mash.h"
 #include "parser.h"
 
 

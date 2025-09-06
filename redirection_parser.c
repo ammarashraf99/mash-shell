@@ -11,6 +11,7 @@
  **/
 
 #include "redirection_parser.h"
+#include <asm-generic/errno-base.h>
 
 /* global variables definitions */
 char g_input_buf[BIG_BUF_SIZE];
@@ -26,7 +27,7 @@ static void handle_squished(char ***, const int *const, char*, struct ToBePopped
 static void handle_to_right_2(char **, const int *const, struct ToBePopped *, int *);
 static void handle_in_middle(char **, int *, struct ToBePopped *, int *, int);
 static void handle_to_right(char **, int *i, struct ToBePopped *, int *, int);
-static void handle_to_left(char **, const int * const, char*, struct ToBePopped *, int *, int);
+static void handle_to_left(char **, int * const, char*, struct ToBePopped *, int *, int);
 static void handle_in_middle_2(char** , const int *const, struct ToBePopped *, int *);
 
 /**
@@ -99,7 +100,17 @@ static void set_out_fd(char* filename)
 {
 	g_saved_out_fd = dup(STDOUT_FILENO);
 	int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, REDIRECTION_OPEN_MODE);
-	dup2(fd, STDOUT_FILENO);
+	if (fd >= 0) { // valid fd
+		dup2(fd, STDOUT_FILENO);
+	} else if (errno == EFAULT){
+		fprintf(stderr, "mash: syntax error near unexpected token `newline`");
+		close(fd);
+		// implement stjmp here.
+	} else {
+		fprintf(stderr, "%s: %s ", filename, strerror(errno));
+		close(fd);
+		//implement stjmp here.
+	}
 	close(fd);
 }
 
@@ -115,7 +126,17 @@ static void set_err_fd(char *filename)
 {
 	g_saved_err_fd = dup(STDERR_FILENO);
 	int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, REDIRECTION_OPEN_MODE);
-	dup2(fd, STDERR_FILENO);
+	if (fd >= 0) { // valid fd
+		dup2(fd, STDERR_FILENO);
+	} else if (errno == EFAULT) {
+		fprintf(stderr, "mash: syntax error near unexpected token `newline`");
+		close(fd);
+		//implement stjmp here.
+	} else {
+		fprintf(stderr, "%s: %s ", filename, strerror(errno));
+		close(fd);
+		//implement stjmp here.
+	}
 	close(fd);
 }
 
@@ -131,7 +152,17 @@ static void set_in_fd(char *filename)
 {
 	g_saved_in_fd = dup(STDERR_FILENO);
 	int fd = open(filename, O_RDONLY);
-	dup2(fd, STDIN_FILENO);
+	if (fd >= 0) { // valid fd
+		dup2(fd, STDIN_FILENO);
+	} else if (errno == EFAULT) {
+		fprintf(stderr, "mash: syntax error near unexpected token `newline`");
+		close(fd);
+		//implement stjmp here.
+	} else {
+		fprintf(stderr, "%s: %s ", filename, strerror(errno));
+		close(fd);
+		// implement setjmp here.
+	}
 	close(fd);
 }
 
@@ -217,13 +248,14 @@ static void handle_in_middle_2(char** _argv, const int *const i, struct ToBePopp
  * processes the case where the redirection operator is alighned to the left
  * between the two arguments e.g., $ cmd> file
  */
-static void handle_to_left(char **_argv, const int * const i,
+static void handle_to_left(char **_argv,  int * const i,
 			   char* c, struct ToBePopped *to_be_popped, int *to_pop_count, int in_or_out)
 {
 	c[0] = 0; // terminates at the redirection operator
-	to_be_popped[*to_pop_count].index = *i;
+	to_be_popped[*to_pop_count].index = *i+1; // this one is guaranteed to be done so inc i
 	to_be_popped[*to_pop_count].type = in_or_out;
 	++(*to_pop_count);
+	/* --(*i); */
 }
 
 /**
@@ -319,7 +351,6 @@ static void handle_squished(char ***_argv, const int *const i,
 	++(*to_pop_count);
 }
 
-
 /**
  * parse_IO_redirections - parses and processes all redirections
  *
@@ -338,12 +369,11 @@ char** parse_IO_redirections(char** _argv)
 		char *c;
 		if ( (c = strchr(_argv[i], '>')) ) {
 			in_or_out = OUT_REDIRECTION;
-		} else {
-			c = strchr(_argv[i], '<');
+		} else if ((c = strchr(_argv[i], '<'))){
 			in_or_out = IN_REDIRECTION;
 		}
-		if (c) {
-			if (TO_THE_LEFT) { 
+		if (c != NULL) {
+			if (TO_THE_LEFT) {
 				if (IS_2) {
 					handle_in_middle_2(_argv, &i, to_be_popped, &to_pop_count);
 				} else {
