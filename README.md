@@ -10,7 +10,7 @@
 
 * [x] cleaning the IO_redirection_function
 
-* [ ] making the in redirection
+* [x] making the in redirection
 
 ### work on remember vars branch
 

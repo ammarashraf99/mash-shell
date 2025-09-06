@@ -27,7 +27,6 @@ int main(int argc, char *argv[]) {
 			continue;
 		}
 		parse_dollar_sign(_argv);
-
 		_argv = parse_IO_redirections(_argv);
 
 		if (!strcmp(_argv[0], "echo"))
