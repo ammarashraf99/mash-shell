@@ -9,15 +9,15 @@
 #include "ext.h"
 #include "redirection_parser.h"
 
-jmp_buf jmpbuffer;
+
+char g_input_buf[BIG_BUF_SIZE];
+jmp_buf g_jmpbuffer;
 
 int main(int argc, char *argv[]) {
 	setbuf(stdout, NULL);
 	Cmd cmd;
 
-	if (setjmp(jmpbuffer) != 0) {
-		fprintf(stderr,"error: wrong jump");
-	}
+	setjmp(g_jmpbuffer);
 
 	for (;;) {
 		printf("%s $ ", getcwd(g_input_buf, CWD_BUF_SIZE));
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 			print_vars();
 			break;
 		case EXPORT:
-			export(_argv);
+			export_vars(_argv);
 			break;
 		case ASIGN:
 			store_vars(_argv, IGN);

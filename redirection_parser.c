@@ -11,9 +11,27 @@
  **/
 
 #include "redirection_parser.h"
+#include "mash.h"
+#include "parser.h"
+#include <setjmp.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+#include <errno.h>
+
+
+/* private macros */
+#define INVALID_FD -1
+#define STACK_MAX_CAP 256
+
+#define REDIRECTION_OPEN_MODE  S_IWGRP | S_IRGRP | S_IRUSR | S_IWUSR
+#define TO_THE_LEFT        c > _argv[i] && c[1] == 0
+#define TO_THE_RIGHT       c == _argv[i] && c[1] != 0
+#define IN_THE_MIDDLE      c == _argv[i] && c[1] == 0
+#define SQUISHED           c > _argv[i] && c[1] != 0
+#define IS_2   _argv[i][0] == '2' && ( c - _argv[i]) == 1
 
 /* global variables definitions */
-char g_input_buf[BIG_BUF_SIZE];
 int g_saved_out_fd = INVALID_FD;
 int g_saved_err_fd = INVALID_FD;
 int g_saved_in_fd  = INVALID_FD;
@@ -48,11 +66,11 @@ static void set_out_fd(char* filename)
 	} else if (errno == EFAULT){
 		fprintf(stderr, "mash: syntax error near unexpected token `newline`\n");
 		close(fd);
-		longjmp(jmpbuffer,1);
+		longjmp(g_jmpbuffer,1);
 	} else {
 		fprintf(stderr, "%s: %s\n", filename, strerror(errno));
 		close(fd);
-		longjmp(jmpbuffer,1);
+		longjmp(g_jmpbuffer,1);
 	}
 	close(fd);
 }
@@ -74,11 +92,11 @@ static void set_err_fd(char *filename)
 	} else if (errno == EFAULT) {
 		fprintf(stderr, "mash: syntax error near unexpected token `newline`\n");
 		close(fd);
-		longjmp(jmpbuffer,1);
+		longjmp(g_jmpbuffer,1);
 	} else {
 		fprintf(stderr, "%s: %s\n", filename, strerror(errno));
 		close(fd);
-		longjmp(jmpbuffer,1);
+		longjmp(g_jmpbuffer,1);
 	}
 	close(fd);
 }
@@ -100,11 +118,11 @@ static void set_in_fd(char *filename)
 	} else if (errno == EFAULT) {
 		fprintf(stderr, "mash: syntax error near unexpected token `newline`\n");
 		close(fd);
-		longjmp(jmpbuffer,1);
+		longjmp(g_jmpbuffer,1);
 	} else {
 		fprintf(stderr, "%s: %s\n", filename, strerror(errno));
 		close(fd);
-		longjmp(jmpbuffer,1);
+		longjmp(g_jmpbuffer,1);
 	}
 	close(fd);
 }
@@ -334,6 +352,11 @@ char** parse_IO_redirections(char** _argv)
 				}
 			}
 		}
+		if (i == STACK_MAX_CAP-1) {
+			fprintf(stderr,"mash: Too large input\n");
+			longjmp(g_jmpbuffer, 1);
+		}
+
 		++i;
 	}
 	--to_pop_count; // fixing the last extra increment
@@ -342,19 +365,6 @@ char** parse_IO_redirections(char** _argv)
 	return _argv;
 }
 
-/**
- * clean_argv - cleaning argv to be able to pass it to make_argv
- * 
- * replacing each terminating null with space ' '
- */
-void clean_argv(char** _argv) 
-{
-	int i = 1;
-	while(_argv[i]) {
-		_argv[i][-1] = ' ';
-		++i;
-	}
-}
 
 /**
  * reset_fds - resetting the out, in, and error redirected file descriptors
@@ -377,25 +387,4 @@ void reset_fds() {
 		dup2(g_saved_in_fd, STDIN_FILENO);
 		g_saved_in_fd = INVALID_FD;
 	}
-}
-
-/**
- * pop_argv - removing one argument from argv list
- *
- * @_argv: argument list
- * @index: index to the element to be popped
- *
- * only moving the subsequent arguments one position back
- * and not resizing anything
-*/
-char* pop_argv(char **_argv, int index)
-{
-	char* ret = _argv[index];
-	int i = index;
-	while (_argv[i] && _argv[i+1]) {
-		_argv[i] = _argv[i+1];
-		++i;
-	}
-	_argv[i] = NULL;
-	return ret;
 }

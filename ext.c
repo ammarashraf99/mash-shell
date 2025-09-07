@@ -1,4 +1,5 @@
 #include "ext.h"
+#include "vars.h"
 
 void ext(char **_argv)
 {
