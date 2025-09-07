@@ -1,5 +1,4 @@
 #include "mash.h"
-#include <fcntl.h>
 
 #include "frk.h"
 #include "parser.h"
@@ -10,10 +9,16 @@
 #include "ext.h"
 #include "redirection_parser.h"
 
+jmp_buf jmpbuffer;
 
 int main(int argc, char *argv[]) {
 	setbuf(stdout, NULL);
 	Cmd cmd;
+
+	if (setjmp(jmpbuffer) != 0) {
+		fprintf(stderr,"error: wrong jump");
+	}
+
 	for (;;) {
 		printf("%s $ ", getcwd(g_input_buf, CWD_BUF_SIZE));
 		fgets(g_input_buf, BIG_BUF_SIZE, stdin);

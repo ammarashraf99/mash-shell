@@ -7,8 +7,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <setjmp.h>
 
 
+extern jmp_buf jmpbuffer;
 
 typedef enum {
 	ECHO,PWD,CD,EXT,ASIGN,PRINT_ARGS,EXPORT,FRK,IGN,

@@ -11,7 +11,6 @@
  **/
 
 #include "redirection_parser.h"
-#include <asm-generic/errno-base.h>
 
 /* global variables definitions */
 char g_input_buf[BIG_BUF_SIZE];
@@ -103,13 +102,13 @@ static void set_out_fd(char* filename)
 	if (fd >= 0) { // valid fd
 		dup2(fd, STDOUT_FILENO);
 	} else if (errno == EFAULT){
-		fprintf(stderr, "mash: syntax error near unexpected token `newline`");
+		fprintf(stderr, "mash: syntax error near unexpected token `newline`\n");
 		close(fd);
-		// implement stjmp here.
+		longjmp(jmpbuffer,1);
 	} else {
-		fprintf(stderr, "%s: %s ", filename, strerror(errno));
+		fprintf(stderr, "%s: %s\n", filename, strerror(errno));
 		close(fd);
-		//implement stjmp here.
+		longjmp(jmpbuffer,1);
 	}
 	close(fd);
 }
@@ -129,13 +128,13 @@ static void set_err_fd(char *filename)
 	if (fd >= 0) { // valid fd
 		dup2(fd, STDERR_FILENO);
 	} else if (errno == EFAULT) {
-		fprintf(stderr, "mash: syntax error near unexpected token `newline`");
+		fprintf(stderr, "mash: syntax error near unexpected token `newline`\n");
 		close(fd);
-		//implement stjmp here.
+		longjmp(jmpbuffer,1);
 	} else {
-		fprintf(stderr, "%s: %s ", filename, strerror(errno));
+		fprintf(stderr, "%s: %s\n", filename, strerror(errno));
 		close(fd);
-		//implement stjmp here.
+		longjmp(jmpbuffer,1);
 	}
 	close(fd);
 }
@@ -155,13 +154,13 @@ static void set_in_fd(char *filename)
 	if (fd >= 0) { // valid fd
 		dup2(fd, STDIN_FILENO);
 	} else if (errno == EFAULT) {
-		fprintf(stderr, "mash: syntax error near unexpected token `newline`");
+		fprintf(stderr, "mash: syntax error near unexpected token `newline`\n");
 		close(fd);
-		//implement stjmp here.
+		longjmp(jmpbuffer,1);
 	} else {
-		fprintf(stderr, "%s: %s ", filename, strerror(errno));
+		fprintf(stderr, "%s: %s\n", filename, strerror(errno));
 		close(fd);
-		// implement setjmp here.
+		longjmp(jmpbuffer,1);
 	}
 	close(fd);
 }

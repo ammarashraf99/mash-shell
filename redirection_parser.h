@@ -22,6 +22,7 @@
 extern char g_input_buf[BIG_BUF_SIZE];
 extern int g_saved_out_fd;
 extern int g_saved_err_fd;
+
 						     
 struct ToBePopped {
 	int index;
