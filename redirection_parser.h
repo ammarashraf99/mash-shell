@@ -23,7 +23,6 @@ extern char g_input_buf[BIG_BUF_SIZE];
 extern int g_saved_out_fd;
 extern int g_saved_err_fd;
 
-						     
 struct ToBePopped {
 	int index;
 	enum {
@@ -31,9 +30,9 @@ struct ToBePopped {
 	}type;
 };
 
-void reset_fds();
-void clean_argv(char** _argv);
-char* pop_argv(char **_argv, int index);
 char** parse_IO_redirections(char** _argv);
+void clean_argv(char** _argv);
+void reset_fds();
+char* pop_argv(char **_argv, int index);
 
 #endif

@@ -3,7 +3,7 @@
 ## Build
 
 A make file is included, just hit `make` and object files and final mash 
-executable.
+executable will be generated.
 
 ```
 $ make
@@ -22,7 +22,7 @@ $ ./mash
 
 * [x] making the in redirection
 
-* [ ] implement a setjmp to get out when some shit happens when you open fd
+* [x] implement a setjmp to get out when some shit happens when you open fd
 
 
 ### work on remember vars branch

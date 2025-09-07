@@ -19,73 +19,17 @@ int g_saved_err_fd = INVALID_FD;
 int g_saved_in_fd  = INVALID_FD;
 
 /* static functions */
-static void register_files(char **, struct ToBePopped*, int);
 static void set_out_fd(char*);
 static void set_err_fd(char*);
-static void handle_squished(char ***, const int *const, char*, struct ToBePopped*, int*, int);
-static void handle_to_right_2(char **, const int *const, struct ToBePopped *, int *);
-static void handle_in_middle(char **, int *, struct ToBePopped *, int *, int);
-static void handle_to_right(char **, int *i, struct ToBePopped *, int *, int);
-static void handle_to_left(char **, int * const, char*, struct ToBePopped *, int *, int);
+static void set_in_fd(char*);
+static void register_files(char **, struct ToBePopped*, int);
 static void handle_in_middle_2(char** , const int *const, struct ToBePopped *, int *);
+static void handle_to_left(char **, int * const, char*, struct ToBePopped *, int *, int);
+static void handle_to_right(char **, int *i, struct ToBePopped *, int *, int);
+static void handle_in_middle(char **, int *, struct ToBePopped *, int *, int);
+static void handle_to_right_2(char **, const int *const, struct ToBePopped *, int *);
+static void handle_squished(char ***, const int *const, char*, struct ToBePopped*, int*, int);
 
-/**
- * clean_argv - cleaning argv to be able to pass it to make_argv
- * 
- * replacing each terminating null with space ' '
- */
-void clean_argv(char** _argv) 
-{
-	int i = 1;
-	while(_argv[i]) {
-		_argv[i][-1] = ' ';
-		++i;
-	}
-}
-
-/**
- * reset_fds - resetting the out, in, and error redirected file descriptors
- *
- * closing the current open file if it exists and reseting to the saved fd
- */
-void reset_fds() {
-	if (g_saved_out_fd >= 0) { // >=0 [valid fd]
-		close(STDOUT_FILENO);
-		dup2(g_saved_out_fd, STDOUT_FILENO);
-		g_saved_out_fd = INVALID_FD;
-	}
-	if (g_saved_err_fd >= 0) {
-		close(STDERR_FILENO);
-		dup2(g_saved_err_fd, STDERR_FILENO);
-		g_saved_err_fd = INVALID_FD;
-	}
-	if (g_saved_in_fd >= 0) {
-		close(STDIN_FILENO);
-		dup2(g_saved_in_fd, STDIN_FILENO);
-		g_saved_in_fd = INVALID_FD;
-	}
-}
-
-/**
- * pop_argv - removing one argument from argv list
- *
- * @_argv: argument list
- * @index: index to the element to be popped
- *
- * only moving the subsequent arguments one position back
- * and not resizing anything
-*/
-char* pop_argv(char **_argv, int index)
-{
-	char* ret = _argv[index];
-	int i = index;
-	while (_argv[i] && _argv[i+1]) {
-		_argv[i] = _argv[i+1];
-		++i;
-	}
-	_argv[i] = NULL;
-	return ret;
-}
 
 /**
  * set_out_fd - redirecting the out to filename
@@ -396,4 +340,62 @@ char** parse_IO_redirections(char** _argv)
 	register_files(_argv, to_be_popped, to_pop_count);
 
 	return _argv;
+}
+
+/**
+ * clean_argv - cleaning argv to be able to pass it to make_argv
+ * 
+ * replacing each terminating null with space ' '
+ */
+void clean_argv(char** _argv) 
+{
+	int i = 1;
+	while(_argv[i]) {
+		_argv[i][-1] = ' ';
+		++i;
+	}
+}
+
+/**
+ * reset_fds - resetting the out, in, and error redirected file descriptors
+ *
+ * closing the current open file if it exists and reseting to the saved fd
+ */
+void reset_fds() {
+	if (g_saved_out_fd >= 0) { // >=0 [valid fd]
+		close(STDOUT_FILENO);
+		dup2(g_saved_out_fd, STDOUT_FILENO);
+		g_saved_out_fd = INVALID_FD;
+	}
+	if (g_saved_err_fd >= 0) {
+		close(STDERR_FILENO);
+		dup2(g_saved_err_fd, STDERR_FILENO);
+		g_saved_err_fd = INVALID_FD;
+	}
+	if (g_saved_in_fd >= 0) {
+		close(STDIN_FILENO);
+		dup2(g_saved_in_fd, STDIN_FILENO);
+		g_saved_in_fd = INVALID_FD;
+	}
+}
+
+/**
+ * pop_argv - removing one argument from argv list
+ *
+ * @_argv: argument list
+ * @index: index to the element to be popped
+ *
+ * only moving the subsequent arguments one position back
+ * and not resizing anything
+*/
+char* pop_argv(char **_argv, int index)
+{
+	char* ret = _argv[index];
+	int i = index;
+	while (_argv[i] && _argv[i+1]) {
+		_argv[i] = _argv[i+1];
+		++i;
+	}
+	_argv[i] = NULL;
+	return ret;
 }
