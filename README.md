@@ -24,6 +24,12 @@ $ ./mash
 
 * [x] implement a setjmp to get out when an error happens when you open fd
 
+### Refactor parse and vars source codes
+	
+* [ ] parse.c: rename it, do I need global variables ?
+
+* [ ] vars.c: ?
+	
 
 ### work on remember vars branch
 
